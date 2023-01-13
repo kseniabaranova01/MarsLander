@@ -1,0 +1,140 @@
+import java.util.Scanner;
+
+class Player {
+
+static int EPSILON = 5;
+static int MAX_VERTICAL_SPEED = 40;
+static int MAX_HORIZONTAL_SPEED = 20;
+
+static double GRAVITY = 3.711;
+static int SECURITY_DISTANCE_FROM_FLAT_GROUND = 50;
+static int Power;
+
+
+public static boolean flyOverFlatGround(int marsLanderX, int flatGroundLeftX, int flatGroundRightX) {
+return marsLanderX >= flatGroundLeftX && marsLanderX <= flatGroundRightX;
+}
+
+public static boolean landDown(int marsLanderY, int flatGroundY) {
+return marsLanderY < flatGroundY + SECURITY_DISTANCE_FROM_FLAT_GROUND;
+}
+
+public static boolean speedLimits(int marsLanderHorizontalSpeed, int marsLanderVerticalSpeed) {
+return Math.abs(marsLanderHorizontalSpeed) <= (MAX_HORIZONTAL_SPEED - EPSILON) && Math.abs(marsLanderVerticalSpeed) <= (MAX_VERTICAL_SPEED - EPSILON);
+}
+
+public static int slowDown(int horizontalSpeed, int verticalSpeed) {
+double speed = Math.sqrt(Math.pow(horizontalSpeed, 2) + Math.pow(verticalSpeed, 2));
+double rotationAsRadians = Math.asin((double) horizontalSpeed / speed);
+return (int) Math.toDegrees(rotationAsRadians);
+}
+
+public static boolean flyingInTheWrongDirection(int marsLanderX, int marsLanderHorizontalSpeed, int flatGroundLeftX, int flatGroundRightX) {
+
+if (marsLanderX < flatGroundLeftX && marsLanderHorizontalSpeed < 0) {
+return true;
+}
+
+if (marsLanderX > flatGroundRightX && marsLanderHorizontalSpeed > 0) {
+return true;
+}
+
+return false;
+}
+
+public static boolean flyingTooFastTowardsFlatGround(int marsLanderHorizontalSpeed) {
+return Math.abs(marsLanderHorizontalSpeed) > (MAX_HORIZONTAL_SPEED * 4);
+}
+
+public static boolean flyingTooSlowTowardsFlatGround(int marsLanderHorizontalSpeed) {
+return Math.abs(marsLanderHorizontalSpeed) <
+(MAX_HORIZONTAL_SPEED * 2);
+}
+
+public static int speedUpTowardsFlatGround(int marsLanderX, int flatGroundLeftX, int flatGroundRightX) {
+
+if (marsLanderX < flatGroundLeftX) {
+return - (int) Math.toDegrees(Math.acos(GRAVITY / 4.0));
+}
+
+if (marsLanderX > flatGroundRightX) {
+return + (int) Math.toDegrees(Math.acos(GRAVITY / 4.0));
+}
+
+return 0;
+}
+
+public static int powerToFlyTowardsFlatGround(int marsLanderVerticalSpeed) {
+return (marsLanderVerticalSpeed >= 0) ? 3 : 4;
+}
+
+
+public static void main(String args[]) {
+
+Scanner in = new Scanner(System.in);
+int N = in.nextInt();
+//положение по х и у
+int flatGroundLeftX = 0;
+int flatGroundRightX = 0;
+int flatGroundY = 0;
+
+int previousPointX = 0;
+int previousPointY = 0;
+//перебор чисел чтобы построить поверхность Марса 
+for (int i = 0; i < N; i++) {
+int landX = in.nextInt();
+int landY = in.nextInt();
+if (previousPointY == landY) {
+flatGroundLeftX = previousPointX;
+flatGroundRightX = landX;
+flatGroundY = landY;
+} else {
+previousPointX = landX;
+previousPointY = landY;
+}
+}
+
+while (true) {
+
+int X = in.nextInt();
+int Y = in.nextInt();
+int HSpeed = in.nextInt();
+int VSpeed = in.nextInt();
+int Fuel = in.nextInt();
+int Rotate = in.nextInt();
+int Power = in.nextInt();
+
+if (flyOverFlatGround(X, flatGroundLeftX, flatGroundRightX)) {
+
+if (landDown(Y, flatGroundY)) {
+Rotate = 0;
+Power = 3;
+} else if (speedLimits(HSpeed, VSpeed)) {
+Rotate = 0;
+Power = 2;
+} else {
+Rotate = slowDown(HSpeed, VSpeed);
+Power = 4;
+}
+
+} else {
+
+if (flyingInTheWrongDirection(X, HSpeed, flatGroundLeftX, flatGroundRightX) || flyingTooFastTowardsFlatGround(HSpeed)) {
+Rotate = slowDown(HSpeed, VSpeed);
+Power = 4;
+} else if (flyingTooSlowTowardsFlatGround(HSpeed)) {
+Rotate = speedUpTowardsFlatGround(X, flatGroundLeftX, flatGroundRightX);
+Power = 4;
+} else {
+Rotate = 0;
+Power = powerToFlyTowardsFlatGround(VSpeed);
+}
+
+}
+
+System.out.println(Rotate + " " + Power);
+}
+
+}
+
+}
